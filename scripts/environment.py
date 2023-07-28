@@ -53,7 +53,7 @@ class Env():
     def getState(self, scan):
         scan_range = []
         heading = self.heading
-        min_range = 0.1 # bateu
+        min_range = 0.2 # bateu
         collision = False
         goal = False
         done = False
@@ -97,8 +97,8 @@ class Env():
         rospy.loginfo("Number of targets %s / distance to curent goal %s / collission number %s", self.goal_numbers, distance, self.collision_numbers)
         
     def step(self, action):
-        liner_vel = action[0]
-        ang_vel = action[1]
+        liner_vel = action[1]
+        ang_vel = action[0]
         
         if self.goal_numbers == 0:
             self.shutdown()
