@@ -53,10 +53,10 @@ class Env():
     def getState(self, scan):
         scan_range = []
         heading = self.heading
-        min_range = 0.13 # bateu
+        min_range = 0.1 # bateu
         collision = False
         goal = False
-
+        done = False
         for i in range(len(scan.ranges)):
             if scan.ranges[i] == float('Inf'):
                 scan_range.append(3.5)
@@ -71,8 +71,9 @@ class Env():
         current_distance = round(math.hypot(self.goal_x - self.position.x, self.goal_y - self.position.y),2)
         if current_distance < 0.2:
             goal = True
+            done = True
 
-        return scan_range, current_distance, collision, goal
+        return scan_range + [heading, current_distance], current_distance, collision, goal, done
     
     def shutdown(self):
         rospy.loginfo("Terminado atividade do TurtleBot")
@@ -114,7 +115,7 @@ class Env():
             except:
                 pass
 
-        state, distance, collision, goal = self.getState(data)
+        state, distance, collision, goal, done = self.getState(data)
         
         self.report_goal_distance(distance, collision, goal)
 
@@ -141,7 +142,7 @@ class Env():
         rospy.loginfo("Target position: x-> %s, y-> %s!!", self.goal_x, self.goal_y)
 
         self.goal_distance = self.getGoalDistace()
-        state, distance, collision, goal = self.getState(data)
+        state, distance, collision, goal, done = self.getState(data)
         
         self.report_goal_distance(distance, collision, goal)
 
