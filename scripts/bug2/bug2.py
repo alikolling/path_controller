@@ -76,7 +76,6 @@ class BUG2:
         
         if math.fabs(difference_angle) > 0.05:
             self.action[0] = 1. * math.fabs(difference_angle) if difference_angle > 0. else -1. * math.fabs(difference_angle)
-            print(difference_angle, self.action[0])
             self.action[1] = 0.
         if math.fabs(difference_angle) <= 0.05:
             self.flag_shift(1)
