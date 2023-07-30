@@ -32,5 +32,5 @@ if __name__ == "__main__":
 
         next_state = env.step(action)
         state = next_state
-
+	
         r.sleep()

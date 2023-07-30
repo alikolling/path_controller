@@ -69,7 +69,7 @@ class Env():
             collision = True
 
         current_distance = round(math.hypot(self.goal_x - self.position.x, self.goal_y - self.position.y),2)
-        if current_distance < 0.2:
+        if current_distance < 0.4:
             goal = True
             done = True
 
@@ -120,7 +120,7 @@ class Env():
         self.report_goal_distance(distance, collision, goal)
 
         return np.asarray(state)
-
+        
     def reset(self):
         rospy.wait_for_service('gazebo/reset_simulation')
         try:

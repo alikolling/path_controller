@@ -11,7 +11,7 @@ class BUG2:
         self.flag_1 = 0
         self.dist = 0.0
         self.first = True
-        self.colission_distance = 0.18 * 3
+        self.collision_distance = 0.18 * 3
 
     def reset(self):
         self.regions = [0, 0, 0, 0, 0]
@@ -21,52 +21,67 @@ class BUG2:
         self.flag_1 = 0
         self.dist = 0.0
         self.first = True
-        self.colission_distance = 0.18 * 3
+        self.collision_distance = 0.18 * 3
+    
+    def laser_scan(self, laser_msg):
+        laser_msg = np.array(laser_msg)
+        laser_msg = laser_msg[::15]
 
-    def angle_towards_goal(self, angle):
-        difference_angle = angle
-        if math.fabs(difference_angle) > 0.05:
-            self.action[0] = 0.5 if difference_angle > 0 else -0.5
+        self.regions = [
+            min(laser_msg[[19, 18, 17]]),# Right
+            min(laser_msg[[22, 21, 20, 19]]),  # Front Right
+            min(laser_msg[[0, 23, 22, 1]]),  # Front
+            min(laser_msg[[1, 2, 3, 4]]),  # Front Left
+            min(laser_msg[[4, 5, 6]]),  # Left
+        ]
 
-        if math.fabs(difference_angle) <= 0.05:
-            self.flag_shift(1)
-
-    def obstacle_avoidance(self):
-        reg_values = self.regions
-        if reg_values[2] > self.colission_distance and reg_values[3] < self.colission_distance and reg_values[1] < self.colission_distance:
-            self.action[1] = 0.4 / 4
-            self.action[0] = -0.3 * 2
-        elif reg_values[2] < self.colission_distance and reg_values[3] < self.colission_distance and reg_values[1] < self.colission_distance:
-            self.action[1] = 0.0
-            self.action[0] = -0.3 * 2
-        elif reg_values[2] < self.colission_distance and reg_values[3] < self.colission_distance and reg_values[1] > self.colission_distance:
-            self.action[1] = 0.2 / 4
-            self.action[0] = -0.4 * 2
-        elif reg_values[2] < self.colission_distance and reg_values[3] > self.colission_distance and reg_values[1] < self.colission_distance:
-            self.action[1] = 0.2 / 4
-            self.action[0] = -0.4 * 2  # -0.4
-        elif reg_values[2] > self.colission_distance and reg_values[3] > self.colission_distance and reg_values[1] > self.colission_distance:
-            self.action[1] = 0.4 / 4  # 0.4
-            self.action[0] = 0.3 * 2
-        elif reg_values[2] > self.colission_distance and reg_values[3] < self.colission_distance and reg_values[1] > self.colission_distance:
-            self.action[1] = 0.3 / 4  # 0.3
-            self.action[0] = -0.2 * 2  # -0.2
-        elif reg_values[2] < self.colission_distance and reg_values[3] > self.colission_distance and reg_values[1] > self.colission_distance:
-            self.action[1] = 0.0
-            self.action[0] = -0.3 * 2
-        elif reg_values[2] > self.colission_distance and reg_values[3] > self.colission_distance and reg_values[1] < self.colission_distance:
-            self.action[1] = 0.4 / 4
-            self.action[0] = 0.0
-
+    
     def flag_shift(self, f):
         self.flag = f
+    
+    def obstacle_avoidance(self):
+
+        if self.regions[2] > self.collision_distance and self.regions[3] < self.collision_distance and self.regions[1] < self.collision_distance:
+            self.action[1] = 0.4 / 4
+            #frente livre
+        elif self.regions[2] < self.collision_distance and self.regions[3] < self.collision_distance and self.regions[1] < self.collision_distance:
+            self.action[1] = -0.1
+            #ré
+        elif self.regions[2] < self.collision_distance and self.regions[3] > self.collision_distance and self.regions[1] < self.collision_distance:
+            self.action[1] = 0.2 / 4
+            self.action[0] = 0.3 
+            #gira esq
+        elif self.regions[2] < self.collision_distance and self.regions[3] < self.collision_distance and self.regions[1] > self.collision_distance:
+            self.action[1] = 0.2 / 4
+            self.action[0] = -0.3
+            #gira direita
+        elif self.regions[2] > self.collision_distance and self.regions[3] < self.collision_distance and self.regions[1] > self.collision_distance:
+            self.action[1] = 0.3 / 4 
+            self.action[0] = -0.2
+            #gira direita mais
+        elif self.regions[2] > self.collision_distance and self.regions[3] > self.collision_distance and self.regions[1] < self.collision_distance:
+            self.action[1] = 0.4 / 4
+            self.action[0] = 0.2
+            #gira esq mais
+
+        
+    def angle_towards_goal(self, angle):
+        difference_angle = angle
+        
+        if math.fabs(difference_angle) > 0.05:
+            self.action[0] = 1. * math.fabs(difference_angle) if difference_angle > 0. else -1. * math.fabs(difference_angle)
+            print(difference_angle, self.action[0])
+            self.action[1] = 0.
+        if math.fabs(difference_angle) <= 0.05:
+            self.flag_shift(1)
 
     def move(self, angle, distance):
         difference_angle = angle
         difference_pos = distance
 
         if difference_pos > 0.2:
-            self.action[1] = 0.6 / 4
+            self.action[1] = 0.5 * difference_pos if self.action[1] > 0.1 else 0.1
+            self.action[0] = 0.
         else:
             self.flag_shift(2)
 
@@ -74,48 +89,39 @@ class BUG2:
         if math.fabs(difference_angle) > 0.03:
             self.flag_shift(0)
 
-    def laser_scan(self, laser_msg):
-        laser_msg = np.array(laser_msg)
-        laser_msg = laser_msg[::18]
-        """
-        self.regions = [
-            min(laser_msg[[3, 4, 5]]),  # Right
-            min(laser_msg[[1, 2]]),  # Front Right
-            min(laser_msg[[0, -1]]),  # Front
-            min(laser_msg[[-2, -3]]),  # Front Left
-            min(laser_msg[[-4, -5, -6]]),  # Left
-        ]
-        """
-        self.regions = [
-            min(laser_msg[[-5, -6, -7]]),  # Right
-            min(laser_msg[[-2, -3, -4, -5]]),  # Front Right
-            min(laser_msg[[0, -1, -2, 1]]),  # Front
-            min(laser_msg[[1, 2, 3, 4]]),  # Front Left
-            min(laser_msg[[4, 5, 6]]),  # Left
-        ]
-
+        
     def get_action(self, state):
+        
         self.laser_scan(state[0:-2])
-        reg_values = self.regions
+
         self.dist = state[-1]
-
-        if self.dist < 4 and (reg_values[2] > self.colission_distance and reg_values[3] > self.colission_distance and reg_values[1] > self.colission_distance):
-            if self.flag == 0:
-                self.angle_towards_goal(angle=state[-2])
-            elif self.flag == 1:
-                self.move(angle=state[-2], distance=state[-1])
-
-        elif self.dist < 4 and reg_values[3] < self.colission_distance:
+        self.angle = state[-2]
+        
+        if self.dist < 4 and (self.regions[2] < self.collision_distance or self.regions[3] < self.collision_distance or self.regions[1] < self.collision_distance):
+            #Evitando obstáculos < 4
+            self.obstacle_avoidance()
             self.flag_1 = 1
-            self.obstacle_avoidance()
-
-        elif self.dist > 4:
-            self.obstacle_avoidance()
+        
+        elif self.dist < 4 and (self.regions[2] > self.collision_distance and self.regions[3] > self.collision_distance and self.regions[1] > self.collision_distance):
+            if self.flag == 0:
+                #angle livre
+                self.angle_towards_goal(self.angle)
+            elif self.flag == 1:
+                #move livre
+                self.move(self.angle, self.dist)
 
         elif self.dist < 4 and self.flag_1 == 1:
             if self.flag == 0:
-                self.angle_towards_goal(angle=state[-2])
+                #angle
+                self.angle_towards_goal(self.angle)
             elif self.flag == 1:
-                self.move(angle=state[-2], distance=state[-1])
+                #move
+                self.move(self.angle, self.dist)
             self.flag_1 = 0
+
+       
+        elif self.dist > 4:
+            #Evitando obstáculos > 4
+            self.obstacle_avoidance()
+        
         return self.action
