@@ -40,32 +40,38 @@ class BUG2:
         self.flag = f
     
     def obstacle_avoidance(self):
-
+        '''
+        Function that avoid the obstacles.
+        '''
         if self.regions[2] > self.collision_distance and self.regions[3] < self.collision_distance and self.regions[1] < self.collision_distance:
             self.action[1] = 0.4 / 4
-            #frente livre
+            #Free front, goes forward
         elif self.regions[2] < self.collision_distance and self.regions[3] < self.collision_distance and self.regions[1] < self.collision_distance:
             self.action[1] = -0.1
-            #ré
+            #closed front, goes backward
         elif self.regions[2] < self.collision_distance and self.regions[3] > self.collision_distance and self.regions[1] < self.collision_distance:
             self.action[1] = 0.2 / 4
             self.action[0] = 0.3 
-            #gira esq
+            #obstacle on the front and right, turns left faster
         elif self.regions[2] < self.collision_distance and self.regions[3] < self.collision_distance and self.regions[1] > self.collision_distance:
             self.action[1] = 0.2 / 4
             self.action[0] = -0.3
-            #gira direita
+            #obstacle on the front and left, turns right faster
         elif self.regions[2] > self.collision_distance and self.regions[3] < self.collision_distance and self.regions[1] > self.collision_distance:
             self.action[1] = 0.3 / 4 
             self.action[0] = -0.2
-            #gira direita mais
+            #obstacle on the left, turns right 
         elif self.regions[2] > self.collision_distance and self.regions[3] > self.collision_distance and self.regions[1] < self.collision_distance:
             self.action[1] = 0.4 / 4
             self.action[0] = 0.2
-            #gira esq mais
+            #obstacle on the right, turns left 
 
         
     def angle_towards_goal(self, angle):
+        '''
+        Funcion that orientates the robot towards the goal.
+        Utilizes a proportional controller for the angular velocity.
+        '''
         difference_angle = angle
         
         if math.fabs(difference_angle) > 0.05:
@@ -76,6 +82,10 @@ class BUG2:
             self.flag_shift(1)
 
     def move(self, angle, distance):
+        '''
+        Function to move the robot on the direction of the goal.
+        Utilizes a proportional controller for the linear velocity.
+        '''
         difference_angle = angle
         difference_pos = distance
 
@@ -91,7 +101,9 @@ class BUG2:
 
         
     def get_action(self, state):
-        
+        '''
+        Function to decide the action to be taken. Recieves the laser ranges, the distance and the angle from the robot to the goal.
+        '''
         self.laser_scan(state[0:-2])
 
         self.dist = state[-1]
@@ -119,7 +131,6 @@ class BUG2:
                 self.move(self.angle, self.dist)
             self.flag_1 = 0
 
-       
         elif self.dist > 4:
             #Evitando obstáculos > 4
             self.obstacle_avoidance()
